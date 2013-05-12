@@ -21,43 +21,35 @@ DROP SEQUENCE people_seq;
 -- Create Tables
 
 CREATE TABLE people (
-  id NUMBER,
-  first_name VARCHAR(50),
-  last_name VARCHAR(50),
-  birthday DATE,
-    CONSTRAINT pk_people_id
-      PRIMARY KEY (id)
+  id NUMBER PRIMARY KEY,
+  first_name VARCHAR(50) NOT NULL,
+  last_name VARCHAR(50) NOT NULL,
+  birthday DATE
 );
 
 CREATE TABLE books (
-  id NUMBER,
-  name VARCHAR(50),
-  author VARCHAR(50),
-  isbn VARCHAR(20),
-    CONSTRAINT pk_books_id
-      PRIMARY KEY (id)
+  id NUMBER PRIMARY KEY,
+  name VARCHAR(50) NOT NULL,
+  author VARCHAR(50) NOT NULL,
+  isbn VARCHAR(20) NOT NULL
 );
 
 CREATE TABLE inventory (
-  book_id NUMBER,
+  book_id NUMBER PRIMARY KEY,
   quantity NUMBER CHECK(quantity > 0),
   available NUMBER CHECK(available >= 0),
     CONSTRAINT availability
       CHECK(quantity >= available),
-    CONSTRAINT pk_inventory_id
-      PRIMARY KEY (book_id),
     CONSTRAINT fk_inventory_book
       FOREIGN KEY (book_id) REFERENCES books(id)
         ON DELETE CASCADE
 );
 
 CREATE TABLE loans (
-  id NUMBER,
+  id NUMBER PRIMARY KEY,
   book_id NUMBER,
   person_id NUMBER,
-  borrowed DATE,
-    CONSTRAINT pk_loans_id
-      PRIMARY KEY (id),
+  borrowed DATE DEFAULT SYSDATE NOT NULL,
     CONSTRAINT fk_loan_book
       FOREIGN KEY (book_id) REFERENCES books(id)
         ON DELETE CASCADE,
