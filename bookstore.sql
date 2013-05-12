@@ -1,4 +1,6 @@
 
+-- PV003 project
+-- Topic: Bookstore
 
 -- Drop Tables
 
@@ -72,7 +74,7 @@ CREATE SEQUENCE books_seq;
 CREATE SEQUENCE loans_seq;
 
 
--- Create Trigger
+-- Create Triggers
 
 CREATE OR REPLACE TRIGGER insert_loan
   AFTER INSERT ON loans
