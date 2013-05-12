@@ -102,7 +102,7 @@ CREATE OR REPLACE PROCEDURE calc_overdue IS
         SET overdue = loan.overdue
         WHERE id = loan.id;
     END LOOP;
-END calc_overdue;
+  END calc_overdue;
 /
 
 
