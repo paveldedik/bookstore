@@ -12,7 +12,6 @@ DROP TABLE people;
 
 -- Drop Sequences
 
-DROP SEQUENCE inventory_seq;
 DROP SEQUENCE loans_seq;
 DROP SEQUENCE books_seq;
 DROP SEQUENCE people_seq;
@@ -49,6 +48,7 @@ CREATE TABLE loans (
   id NUMBER PRIMARY KEY,
   book_id NUMBER,
   person_id NUMBER,
+  overdue NUMBER,
   borrowed DATE DEFAULT SYSDATE NOT NULL,
     CONSTRAINT fk_loan_book
       FOREIGN KEY (book_id) REFERENCES books(id)
@@ -89,6 +89,23 @@ CREATE OR REPLACE TRIGGER delete_loan
 /
 
 
+-- Create Procedures
+
+CREATE OR REPLACE PROCEDURE calc_overdue IS
+  CURSOR delay IS
+    SELECT id, trunc(months_between(SYSDATE, borrowed)) overdue
+      FROM loans
+      WHERE add_months(SYSDATE, -1) > borrowed;
+  BEGIN
+    FOR loan IN delay LOOP
+      UPDATE loans
+        SET overdue = loan.overdue
+        WHERE id = loan.id;
+    END LOOP;
+END calc_overdue;
+/
+
+
 -- Insert Data
 
 INSERT INTO books VALUES (books_seq.NEXTVAL, 'A Storm of Swords', 'George R. R. Martin', '111-333');
@@ -105,12 +122,15 @@ INSERT INTO inventory VALUES (books_seq.CURRVAL, 2, 2);
 
 
 INSERT INTO people VALUES (people_seq.NEXTVAL, 'Eddard', 'Stark', DATE '1980-02-02');
-INSERT INTO loans VALUES (loans_seq.NEXTVAL, 1, people_seq.CURRVAL, DATE '2013-05-05');
-INSERT INTO loans VALUES (loans_seq.NEXTVAL, 3, people_seq.CURRVAL, DATE '2013-04-25');
+INSERT INTO loans VALUES (loans_seq.NEXTVAL, 1, people_seq.CURRVAL, NULL, DATE '2013-05-05');
+INSERT INTO loans VALUES (loans_seq.NEXTVAL, 3, people_seq.CURRVAL, NULL, DATE '2013-03-25');
 
 INSERT INTO people VALUES (people_seq.NEXTVAL, 'Hizdahr', 'Loraq', DATE '1987-09-23');
-INSERT INTO loans VALUES (loans_seq.NEXTVAL, 3, people_seq.CURRVAL, DATE '2013-04-30');
+INSERT INTO loans VALUES (loans_seq.NEXTVAL, 3, people_seq.CURRVAL, NULL, DATE '2013-04-30');
 
 INSERT INTO people VALUES (people_seq.NEXTVAL, 'Tormund', 'Giantsbane', DATE '1989-01-10');
-INSERT INTO loans VALUES (loans_seq.NEXTVAL, 2, people_seq.CURRVAL, DATE '2013-05-08');
-INSERT INTO loans VALUES (loans_seq.NEXTVAL, 4, people_seq.CURRVAL, DATE '2013-05-08');
+INSERT INTO loans VALUES (loans_seq.NEXTVAL, 2, people_seq.CURRVAL, NULL, DATE '2013-02-08');
+INSERT INTO loans VALUES (loans_seq.NEXTVAL, 4, people_seq.CURRVAL, NULL, DATE '2013-05-08');
+
+
+EXECUTE calc_overdue;
