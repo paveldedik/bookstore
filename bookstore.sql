@@ -121,6 +121,8 @@ INSERT INTO books VALUES (books_seq.NEXTVAL, 'Expert Python Programming', 'Tarek
 INSERT INTO inventory VALUES (books_seq.CURRVAL, 2, 2);
 
 
+INSERT INTO people VALUES (people_seq.NEXTVAL, 'Robb', 'Stark', DATE '1995-01-02');
+
 INSERT INTO people VALUES (people_seq.NEXTVAL, 'Eddard', 'Stark', DATE '1980-02-02');
 INSERT INTO loans VALUES (loans_seq.NEXTVAL, 1, people_seq.CURRVAL, NULL, DATE '2013-05-05');
 INSERT INTO loans VALUES (loans_seq.NEXTVAL, 3, people_seq.CURRVAL, NULL, DATE '2013-03-25');
@@ -134,3 +136,14 @@ INSERT INTO loans VALUES (loans_seq.NEXTVAL, 4, people_seq.CURRVAL, NULL, DATE '
 
 
 EXECUTE calc_overdue;
+
+
+COLUMN FIRST_NAME FORMAT A20;
+COLUMN LAST_NAME FORMAT A20;
+
+
+SELECT first_name, last_name, count(person_id)
+  FROM people
+  LEFT OUTER JOIN loans
+    ON people.id = loans.person_id
+  GROUP BY person_id, first_name, last_name;
