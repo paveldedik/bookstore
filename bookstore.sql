@@ -41,7 +41,6 @@ CREATE TABLE library (
       CHECK(quantity >= available),
     CONSTRAINT fk_library_book
       FOREIGN KEY (book_id) REFERENCES books(id)
-        ON DELETE CASCADE
 );
 
 CREATE TABLE loans (
@@ -51,8 +50,7 @@ CREATE TABLE loans (
   overdue NUMBER,
   borrowed DATE DEFAULT SYSDATE NOT NULL,
     CONSTRAINT fk_loan_book
-      FOREIGN KEY (book_id) REFERENCES books(id)
-        ON DELETE CASCADE,
+      FOREIGN KEY (book_id) REFERENCES books(id),
     CONSTRAINT fk_loan_person
       FOREIGN KEY (person_id) REFERENCES people(id)
         ON DELETE CASCADE
