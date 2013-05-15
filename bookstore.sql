@@ -5,7 +5,7 @@
 -- Drop Tables
 
 DROP TABLE loans;
-DROP TABLE inventory;
+DROP TABLE library;
 DROP TABLE books;
 DROP TABLE people;
 
@@ -33,13 +33,13 @@ CREATE TABLE books (
   isbn VARCHAR(20) NOT NULL
 );
 
-CREATE TABLE inventory (
+CREATE TABLE library (
   book_id NUMBER PRIMARY KEY,
   quantity NUMBER CHECK(quantity > 0),
   available NUMBER CHECK(available >= 0),
     CONSTRAINT availability
       CHECK(quantity >= available),
-    CONSTRAINT fk_inventory_book
+    CONSTRAINT fk_library_book
       FOREIGN KEY (book_id) REFERENCES books(id)
         ON DELETE CASCADE
 );
@@ -72,7 +72,7 @@ CREATE OR REPLACE TRIGGER insert_loan
   AFTER INSERT ON loans
   FOR EACH ROW
   BEGIN
-    UPDATE inventory
+    UPDATE library
       SET available = available - 1
       WHERE book_id = :new.book_id;
   END;
@@ -82,7 +82,7 @@ CREATE OR REPLACE TRIGGER delete_loan
   AFTER DELETE ON loans
   FOR EACH ROW
   BEGIN
-    UPDATE inventory
+    UPDATE library
       SET available = available + 1
       WHERE book_id = :old.book_id;
   END;
@@ -108,31 +108,33 @@ CREATE OR REPLACE PROCEDURE calc_overdue IS
 
 -- Insert Data
 
+INSERT INTO books VALUES (books_seq.NEXTVAL, 'Learn You a Haskell', 'Miran Lipovaca', '000-222');
+
 INSERT INTO books VALUES (books_seq.NEXTVAL, 'A Storm of Swords', 'George R. R. Martin', '111-333');
-INSERT INTO inventory VALUES (books_seq.CURRVAL, 5, 5);
+INSERT INTO library VALUES (books_seq.CURRVAL, 5, 5);
 
 INSERT INTO books VALUES (books_seq.NEXTVAL, 'Thinking with Type', 'Ellen Lupton', '222-444');
-INSERT INTO inventory VALUES (books_seq.CURRVAL, 1, 1);
+INSERT INTO library VALUES (books_seq.CURRVAL, 1, 1);
 
 INSERT INTO books VALUES (books_seq.NEXTVAL, 'A Dance with Dragons', 'George R. R. Martin', '333-555');
-INSERT INTO inventory VALUES (books_seq.CURRVAL, 10, 10);
+INSERT INTO library VALUES (books_seq.CURRVAL, 10, 10);
 
-INSERT INTO books VALUES (books_seq.NEXTVAL, 'Expert Python Programming', 'Tarek Ziadé', '444-666');
-INSERT INTO inventory VALUES (books_seq.CURRVAL, 2, 2);
+INSERT INTO books VALUES (books_seq.NEXTVAL, 'Expert Python Programming', 'Tarek Ziade', '444-666');
+INSERT INTO library VALUES (books_seq.CURRVAL, 2, 2);
 
 
 INSERT INTO people VALUES (people_seq.NEXTVAL, 'Robb', 'Stark', DATE '1995-01-02');
 
 INSERT INTO people VALUES (people_seq.NEXTVAL, 'Eddard', 'Stark', DATE '1980-02-02');
-INSERT INTO loans VALUES (loans_seq.NEXTVAL, 1, people_seq.CURRVAL, NULL, DATE '2013-05-05');
-INSERT INTO loans VALUES (loans_seq.NEXTVAL, 3, people_seq.CURRVAL, NULL, DATE '2013-03-25');
+INSERT INTO loans VALUES (loans_seq.NEXTVAL, 2, people_seq.CURRVAL, NULL, DATE '2013-04-05');
+INSERT INTO loans VALUES (loans_seq.NEXTVAL, 4, people_seq.CURRVAL, NULL, DATE '2013-03-25');
 
 INSERT INTO people VALUES (people_seq.NEXTVAL, 'Hizdahr', 'Loraq', DATE '1987-09-23');
-INSERT INTO loans VALUES (loans_seq.NEXTVAL, 3, people_seq.CURRVAL, NULL, DATE '2013-04-30');
+INSERT INTO loans VALUES (loans_seq.NEXTVAL, 4, people_seq.CURRVAL, NULL, DATE '2013-04-30');
 
 INSERT INTO people VALUES (people_seq.NEXTVAL, 'Tormund', 'Giantsbane', DATE '1989-01-10');
-INSERT INTO loans VALUES (loans_seq.NEXTVAL, 2, people_seq.CURRVAL, NULL, DATE '2013-02-08');
-INSERT INTO loans VALUES (loans_seq.NEXTVAL, 4, people_seq.CURRVAL, NULL, DATE '2013-05-08');
+INSERT INTO loans VALUES (loans_seq.NEXTVAL, 3, people_seq.CURRVAL, NULL, DATE '2013-02-08');
+INSERT INTO loans VALUES (loans_seq.NEXTVAL, 5, people_seq.CURRVAL, NULL, DATE '2013-05-08');
 
 
 EXECUTE calc_overdue;
@@ -142,8 +144,26 @@ COLUMN FIRST_NAME FORMAT A20;
 COLUMN LAST_NAME FORMAT A20;
 
 
-SELECT first_name, last_name, count(person_id)
-  FROM people
-  LEFT OUTER JOIN loans
+-- People and number of books they've borrowed.
+
+SELECT first_name, last_name, count(person_id) number_of_books
+  FROM people LEFT OUTER JOIN loans
     ON people.id = loans.person_id
   GROUP BY person_id, first_name, last_name;
+
+-- Authors ordered by the number of copies of all their books
+-- thet are present in the library.
+
+SELECT author, sum(nvl(quantity, 0)) number_of_copies
+  FROM books LEFT OUTER JOIN library
+    ON books.id = library.book_id
+  GROUP BY author
+  ORDER BY number_of_copies DESC;
+
+-- People who still haven't returned a book to the library (which they
+-- have for a nonstandard period of time) and will have to pay a fine.
+
+SELECT person_id
+  FROM loans
+  GROUP BY person_id
+  HAVING sum(overdue) > 0;
