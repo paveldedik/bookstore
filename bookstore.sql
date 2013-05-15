@@ -140,11 +140,13 @@ EXECUTE calc_overdue;
 
 COLUMN FIRST_NAME FORMAT A20;
 COLUMN LAST_NAME FORMAT A20;
+COLUMN FULL_NAME FORMAT A20;
+COLUMN AUTHOR FORMAT A20;
 
 
 -- People and number of books they've borrowed.
 
-SELECT first_name, last_name, count(person_id) number_of_books
+SELECT first_name, last_name, count(person_id) AS number_of_books
   FROM people LEFT OUTER JOIN loans
     ON people.id = loans.person_id
   GROUP BY person_id, first_name, last_name;
@@ -152,7 +154,7 @@ SELECT first_name, last_name, count(person_id) number_of_books
 -- Authors ordered by the number of copies of all their books
 -- thet are present in the library.
 
-SELECT author, sum(nvl(quantity, 0)) number_of_copies
+SELECT author, sum(nvl(quantity, 0)) AS number_of_copies
   FROM books LEFT OUTER JOIN library
     ON books.id = library.book_id
   GROUP BY author
@@ -162,7 +164,7 @@ SELECT author, sum(nvl(quantity, 0)) number_of_copies
 -- have for a nonstandard period of time) and will have to pay a fine.
 -- The fine is 100 CZK for each month.
 
-SELECT first_name, last_name, fine FROM (
+SELECT first_name||' '||last_name AS full_name, fine FROM (
   SELECT person_id, sum(overdue) * 100 AS fine
     FROM loans
     GROUP BY person_id
