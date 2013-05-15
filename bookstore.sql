@@ -89,7 +89,7 @@ CREATE OR REPLACE TRIGGER delete_loan
 /
 
 
--- Create Procedures
+-- Create a Procedure
 
 CREATE OR REPLACE PROCEDURE calc_overdue IS
   CURSOR delay IS
@@ -162,8 +162,12 @@ SELECT author, sum(nvl(quantity, 0)) number_of_copies
 
 -- People who still haven't returned a book to the library (which they
 -- have for a nonstandard period of time) and will have to pay a fine.
+-- The fine is 100 CZK for each month.
 
-SELECT person_id
-  FROM loans
-  GROUP BY person_id
-  HAVING sum(overdue) > 0;
+SELECT first_name, last_name, fine FROM (
+  SELECT person_id, sum(overdue) * 100 AS fine
+    FROM loans
+    GROUP BY person_id
+    HAVING sum(overdue) > 0
+  ) fines INNER JOIN people
+    ON fines.person_id = people.id;
